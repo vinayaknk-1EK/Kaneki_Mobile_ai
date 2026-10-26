@@ -1,6 +1,7 @@
 import speech_recognition as  sr
 import platform
 import subprocess
+import os
 
 # initialize recognizer
 recognizer = sr.Recognizer()
@@ -38,25 +39,44 @@ def listen_voice():
 
 # till here ends the input string and the error handlers(for now!)
 
+
+
+
 # from here begins the execution part that takes the input from abovce and 
 # execute the commands through android api keys (for now it is mocked through text outputs) 
 
 
-def execute_actions(command):
+def execute_actions(action_type, raw_text):
     """Mocks the android environment through text outputs that
     later can be replaced with android api keys"""
-    if "call" in command:
-       # speak_mock ("calling [contact name]...")
-        print(f"\n[Status...kaneki(test): (calling [contact name])...]")
-    elif "open calender" in command or "add event" in command:
-        # speak_mock ("opening calender...")
-        print(f"\n[Status...kaneki(test): (opening calender)...]")
-    elif "close" in command:
-        # speak_mock ("closing application...")
-        print(f"\n[Status...kaneki(test): (closing application)...]")
-        exit()
+    
+    if action_type == "call":
+       # handels the call command and executes it through android api keys (for now it is mocked through text outputs)
+       # notification popups from toast
+       subprocess.run(["termux-toast", "Kaneki: Calling..."])
+       # need to profide dynamic parser to select number from contact through 
+       # name input
+       target_number= "1234567890"
+       print(f"[Hardware]: calling{target_number}...")
+       subprocess.run(["termux-telephony-call", target_number])
+       """ print(f"\n[Status...kaneki: (calling [contact name])...]")"""
+
+    elif action_type == "open_calender":
+        subprocess.run(["termux-toast", "Kaneki: Opening Calender..."])
+        print("[Hardware]: Opening Calender...")
+        """print(f"\n[Status...kaneki: (opening calender)...]")"""
+
+    elif action_type == "close":
+        subprocess.run(["termux-toast", "Kaneki: Closing Application..."])
+        print("[Hardware]: Closing Application...")
+        """print(f"\n[Status...kaneki: (closing application)...]")"""
+        return False
+
     else:
+        subprocess.run(["termux-toast", "Kaneki: command not recognized..."])
         print("\n [kaneki]: command not recognized or not allowed yet...")
+
+    return True
 
 if __name__ == "__main__":
     print ("==========================================")
@@ -66,7 +86,7 @@ if __name__ == "__main__":
     while True:
         cmd = listen_voice()
         if cmd:
-            execute_actions(cmd)
+            execute_actions(cmd, cmd)
 
 
         
