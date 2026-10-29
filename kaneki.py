@@ -23,11 +23,11 @@ def install_dependencies():
         "\n checking system packages...")
         try:
             # check if portaudio or clang is missing by running a quick check, or just safe-install them via pkg
-            subprocess.run(["dpkg", "-s", "portaudio", "clang", "ffmpeg", "termux-api"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            subprocess.run(["dpkg", "-s", "portaudio", "clang", "ffmpeg", "termux-api", "flac"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         except subprocess.CalledProcessError:
             print("[Setup]: Missing essential system binaries. Installing via pkg (portaudio, clang, ffmpeg, termux-api)...")
             subprocess.run(["pkg", "update", "-y"])
-            subprocess.run(["pkg", "install", "portaudio", "clang", "ffmpeg", "termux-api", "-y"])
+            subprocess.run(["pkg", "install", "portaudio", "clang", "ffmpeg", "termux-api", "flac", "-y"])
 
 
     required_packages = {"SpeechRecognition": "SpeechRecognition", 
@@ -74,7 +74,7 @@ def listen_voice():
         recognizer.adjust_for_ambient_noise(source, duration=0.8)
         try:
             # listen for speech input
-            audio = recognizer.listen(source, timeout=5, phrase_time_limit=10)
+            audio = recognizer.listen(source, timeout=10, phrase_time_limit=10)
             text = recognizer.recognize_google(audio)
             print(f"\n command was; {text}")
             return text.lower()
