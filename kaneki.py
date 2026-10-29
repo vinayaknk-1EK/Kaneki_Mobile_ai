@@ -15,7 +15,7 @@ def install_dependencies():
 
     has_termux_api = shutil.which("termux-toast") is not None
 
-    required_packages = ["SpeechRecognition", "pyaudio", "termux-api"]
+    required_packages = {"SpeechRecognition": "SpeechRecognition", "pyaudio": "pyaudio", "termux-api": "termux-api"}
     for module_name, pip_name in required_packages.items():
         try:
             __import__(module_name)
