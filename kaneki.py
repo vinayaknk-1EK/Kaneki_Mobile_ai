@@ -4,18 +4,36 @@ import os
 import json
 import shutil
 import sys
+import time
 
 # this block installs dependencies needed from the get go
-
+IS_ANDROID =""
 def install_dependencies():
     """checks and installs dependencies needed"""
+    IS_ANDROID = "com.termux" in os.environ.get("PREFIX", "") or (platform.system() == "linux" and os.path.exists("/data/data/com.termux"))
+
+    has_termux_api = shutil.which("termux-toast") is not None
+
     print("==========================================")
     print("            Kaneki: starting up           ")
     print("==========================================")
 
-    has_termux_api = shutil.which("termux-toast") is not None
+    if IS_ANDROID:
+        print("android env detected(currently running on Termux), " \
+        "\n checking system packages...")
+        try:
+            # check if portaudio or clang is missing by running a quick check, or just safe-install them via pkg
+            subprocess.run(["dpkg", "-s", "portaudio", "clang", "ffmpeg", "termux-api"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except subprocess.CalledProcessError:
+            print("[Setup]: Missing essential system binaries. Installing via pkg (portaudio, clang, ffmpeg, termux-api)...")
+            subprocess.run(["pkg", "update", "-y"])
+            subprocess.run(["pkg", "install", "portaudio", "clang", "ffmpeg", "termux-api", "-y"])
 
-    required_packages = {"SpeechRecognition": "SpeechRecognition", "pyaudio": "pyaudio", "termux-api": "termux-api"}
+
+    required_packages = {"SpeechRecognition": "SpeechRecognition", 
+                         "pyaudio": "pyaudio", 
+                         "termux-api": "termux-api"}
+    
     for module_name, pip_name in required_packages.items():
         try:
             __import__(module_name)
@@ -29,12 +47,21 @@ install_dependencies()
 import speech_recognition as  sr
 # initialize recognizer
 recognizer = sr.Recognizer()
+#  giving the wake word
+WAKE_WORD = "Hey Kaneki" or "Kaneki"
+
+def notify(Message):
+    if IS_ANDROID:
+        try: 
+            subprocess.run(["termux-toast"], "kaneki Online...")
+        except FileNotFoundError:
+            pass
 
 # this was the place holder for that actions showcased terminal outputs.
-"""def speak_mock(text):
-    "Simulates the assistance responce through text in terminal"
-    print(f"\n[Status...kaneki(test): (listening)...]")"""
-# this is not utilized anymore
+#"""def speak_mock(text):
+ #   "Simulates the assistance responce through text in terminal"
+  #  print(f"\n[Status...kaneki(test): (listening)...]")"""
+# this is not utilized anymore!!!
 
 # this is the listening string that takes voice commandsa and turns them into texts
 # for the next step of executing the commands through android api keys 
@@ -68,7 +95,7 @@ def parse_intent(user_input):
     """currently hardcoded for tsertain taska but acan be integrated with ai 
     for future repurposing"""
 
-    if "call" in user_input:
+    if "call" or "phone" or "dial" in user_input:
         return "call", user_input
     elif "open calender" in user_input:
         return "calender", user_input
@@ -148,7 +175,7 @@ def execute_actions(action_type, raw_text):
 
 if __name__ == "__main__":
     print ("==========================================")
-    print ("  Kaneki: Voice Assistant (Test Mode)     ")
+    print ("     Kaneki: Voice Assistant (live)       ")
     print ("==========================================")
     subprocess.run(["termux-toast", "Kaneki online!!"])
 
