@@ -1,10 +1,32 @@
-import speech_recognition as  sr
 import platform
 import subprocess
 import os
 import json
+import shutil
+import sys
 
+# this block installs dependencies needed from the get go
 
+def install_dependencies():
+    """checks and installs dependencies needed"""
+    print("==========================================")
+    print("            Kaneki: starting up           ")
+    print("==========================================")
+
+    has_termux_api = shutil.which("termux-toast") is not None
+
+    required_packages = ["SpeechRecognition", "pyaudio", "termux-api"]
+    for module_name, pip_name in required_packages.items():
+        try:
+            __import__(module_name)
+        except ImportError:
+            print(f"[Setup]: Missing dependency {pip_name}, installing automatically...")
+            subprocess.check_call([sys.executable, "-m", "pip", "install", pip_name])
+
+# this checks if all the dependencies are installed
+install_dependencies()
+
+import speech_recognition as  sr
 # initialize recognizer
 recognizer = sr.Recognizer()
 
@@ -101,16 +123,22 @@ def execute_actions(action_type, raw_text):
             print(f" hardware: {search_name} not in contacts!")
             subprocess.run(["termux-toast", f"kaneki: {search_name} not found!"])
 
+
+
     elif action_type == "open_calender":
         subprocess.run(["termux-toast", "Kaneki: Opening Calender..."])
         print("[Hardware]: Opening Calender...")
         """print(f"\n[Status...kaneki: (opening calender)...]")"""
 
+
+
     elif action_type == "close":
-        subprocess.run(["termux-toast", "Kaneki: Closing Application..."])
+        subprocess.run(["termux-toast", "Kaneki: closing down..."])
         print("[Hardware]: Closing Application...")
         """print(f"\n[Status...kaneki: (closing application)...]")"""
         return False
+
+
 
     else:
         subprocess.run(["termux-toast", "Kaneki: command not recognized..."])
