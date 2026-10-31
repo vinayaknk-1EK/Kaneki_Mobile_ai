@@ -66,38 +66,50 @@ def notify(Message):
 # this is the listening string that takes voice commandsa and turns them into texts
 # for the next step of executing the commands through android api keys 
 # (for now it is mocked through text outputs)  
-
+source =""
 def listen_voice():
     """catches user audio though microphone and converts it to text"""
     with sr.Microphone() as source:
         print("\n listening through microphone... speak now!!")
-        recognizer.adjust_for_ambient_noise(source, duration=0.8)
+        recognizer.adjust_for_ambient_noise(source, duration=1)
         try:
             # listen for speech input
             audio = recognizer.listen(source, timeout=10, phrase_time_limit=10)
             text = recognizer.recognize_google(audio)
             print(f"\n command was; {text}")
             return text.lower()
+        
         except sr.WaitTimeoutError:
-            print("\n[Status...kaneki(test): (timeout, no input detected)...]")
+            print("\n[Status...kaneki: (timeout, no input detected)...]")
+            subprocess.run(["termux-toast"], "Kaneki: timeout, no input detected")
             return None
+        
         except sr.UnknownValueError:
-            print("\n [Status...kaneki(test): (could not understand audio)...]")
+            print("\n [Status...kaneki: (could not understand audio)...]")
+            subprocess.run(["termux-toast"], "Kaneki: could not understand audio")
             return None
+        
         except sr.RequestError:
-            print("\n [Status...kaneki(test): (could not request results from Google Speech Recognition service)...]")
+            print("\n [Status...kaneki: (could not request results from Google Speech Recognition service)...]")
+            subprocess.run(["termux-toast"], "Kaneki: could not request results from Google Speech Recognition service)...")
             return None
+        except Exception as e:
+            # Tihs catches OS/PortAudio errors when the mic is locked by phone call
+            print(f"[hardware warning]: microphone busy, ({e}) Retrying in a moment...")
+            return None
+
+        
 
 # till here ends the input string and the error handlers(for now!)
 
 # this is the intent parser that takes in commands (hardcoded for now)
 def parse_intent(user_input):
-    """currently hardcoded for tsertain taska but acan be integrated with ai 
+    """currently hardcoded for certain tasks but can be integrated with ai 
     for future repurposing"""
 
-    if "call" or "phone" or "dial" in user_input:
-        return "call", user_input
-    elif "open calender" in user_input:
+    if any(word IN user_input for word in ["call", "phone", "dial"])
+        return "call", user_input 
+    elif any(word in user_input for word in ["open calender", "calender", "event"])
         return "calender", user_input
     elif "close" or "shutdown" in user_input:
         return "close", user_input
@@ -146,6 +158,19 @@ def execute_actions(action_type, raw_text):
             subprocess.run(["termux-toast", f"Kaneki: calling {matched_number}..."])
             print(f"Terminal: found {matched_number}, calling {matched_number}...")
             subprocess.run(["termux-telephony-call", target_number])
+
+#Dynamic waiting perriod for the microphone to reactivate
+            while True:
+                time.sleep(5)
+                try:
+                    with sr.Microphone() as source:                 # if this while block crashes it means the call ended
+                        break                                            # if it does not it retries after every 5 seconds to check 
+                except Exception:
+                    pass # this works if the microphone is still in use                                                    # the microphone is free
+                        
+
+
+
         else:
             print(f" hardware: {search_name} not in contacts!")
             subprocess.run(["termux-toast", f"kaneki: {search_name} not found!"])
