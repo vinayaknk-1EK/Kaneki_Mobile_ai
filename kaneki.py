@@ -23,7 +23,8 @@ def install_dependencies():
         "\n checking system packages...")
         try:
             # check if portaudio or clang is missing by running a quick check, or just safe-install them via pkg
-            subprocess.run(["dpkg", "-s", "portaudio", "clang", "ffmpeg", "termux-api", "flac"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            subprocess.run(["dpkg", "-s", "portaudio", "clang", "ffmpeg", "termux-api", "flac"], 
+                           check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         except subprocess.CalledProcessError:
             print("[Setup]: Missing essential system binaries. Installing via pkg (portaudio, clang, ffmpeg, termux-api)...")
             subprocess.run(["pkg", "update", "-y"])
@@ -53,7 +54,7 @@ WAKE_WORD = ["Kaneki",  "kaneki",  "kaneeki"] # adding variables to make sure go
 def notify(Message):
     if IS_ANDROID:
         try: 
-            subprocess.run(["termux-toast"], "kaneki Online...")
+            subprocess.run(["termux-toast", "kaneki Online..."])
         except FileNotFoundError:
             pass
 
@@ -72,9 +73,9 @@ def listen_for_wake_word():
     """listens quitely until the wake word is heard,
     Returns none if no wake word, "" ifthe wake word is used """
     try:
-        with rs.Microphone()as source:
+        with sr.Microphone()as source:
             recognizer.adjust_for_ambient_noise(source, duration=1)
-            audio = recognizer.listen(source, timeout=5, pharse_time_limit=6)
+            audio = recognizer.listen(source, timeout=5, phrase_time_limit=6)
         text= recognizer.recognize_google(audio).lower()
     except (sr.WaitTimeoutError, sr.UnknownValueError, sr.RequestError):
         return None
@@ -102,17 +103,17 @@ def listen_voice():
         
         except sr.WaitTimeoutError:
             print("\n[Status...kaneki: (timeout, no input detected)...]")
-            subprocess.run(["termux-toast"], "Kaneki: timeout, no input detected")
+            subprocess.run(["termux-toast", "Kaneki: timeout, no input detected"])
             return None
         
         except sr.UnknownValueError:
             print("\n [Status...kaneki: (could not understand audio)...]")
-            subprocess.run(["termux-toast"], "Kaneki: could not understand audio")
+            subprocess.run(["termux-toast", "Kaneki: could not understand audio"])
             return None
         
         except sr.RequestError:
             print("\n [Status...kaneki: (could not request results from Google Speech Recognition service)...]")
-            subprocess.run(["termux-toast"], "Kaneki: could not request results from Google Speech Recognition service)...")
+            subprocess.run(["termux-toast", "Kaneki: could not request results from Google Speech Recognition service)..."])
             return None
         except Exception as e:
             # Tihs catches OS/PortAudio errors when the mic is locked by phone call
@@ -156,7 +157,7 @@ def execute_actions(action_type, raw_text):
         # uses simple split logic for the words in the [] bracket.
 
         filler = {"call", "phone", "dial", "please", "make", "a", "to",}
-        search_name = "".join(w for w in raw_text.split() if w not in filler)
+        search_name = " ".join(w for w in raw_text.split() if w not in filler)
         subprocess.run(["termux-toast", f"Kaneki: searching {search_name}..."])
 
         if not search_name:
@@ -219,7 +220,7 @@ if __name__ == "__main__":
     print ("==========================================")
     subprocess.run(["termux-toast", "Kaneki online!!"])
 
-    
+    is_running = True
     while is_running:
         cmd = listen_for_wake_word()
         if cmd is None:
