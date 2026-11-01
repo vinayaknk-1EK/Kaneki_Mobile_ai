@@ -5,6 +5,12 @@ import json
 import shutil
 import sys
 import time
+import socket
+
+_orig_getaddrinfo = socket.getaddrinfo
+def _ipv4_only(host, port, family=0, type=0, proto=0, flags=0 ):
+    return _orig_getaddrinfo(host, port, socket.AF_INET, type, proto, flags)
+socket.getaddrinfo = _ipv4_only
 
 # this block installs dependencies needed from the get go
 IS_ANDROID =""
@@ -48,6 +54,7 @@ install_dependencies()
 import speech_recognition as  sr
 # initialize recognizer
 recognizer = sr.Recognizer()
+recognizer.operation_timeout = 10
 #  giving the wake word
 WAKE_WORD = ["Kaneki",  "kaneki",  "kaneeki"] # adding variables to make sure google catches all the possible spells
 
