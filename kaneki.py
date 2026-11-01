@@ -48,7 +48,7 @@ import speech_recognition as  sr
 # initialize recognizer
 recognizer = sr.Recognizer()
 #  giving the wake word
-WAKE_WORD = "Hey Kaneki" or "Kaneki"
+WAKE_WORD = ["Kaneki",  "kaneki",  "kaneeki"] # adding variables to make sure google catches all the possible spells
 
 def notify(Message):
     if IS_ANDROID:
@@ -67,6 +67,27 @@ def notify(Message):
 # for the next step of executing the commands through android api keys 
 # (for now it is mocked through text outputs)  
 source =""
+
+def listen_for_wake_word():
+    """listens quitely until the wake word is heard,
+    Returns none if no wake word, "" ifthe wake word is used """
+    try:
+        with rs.Microphone()as source:
+            recognizer.adjust_for_ambient_noise(source, duration=1)
+            audio = recognizer.listen(source, timeout=5, pharse_time_limit=6)
+        text= recognizer.recognize_google(audio).lower()
+    except (sr.WaitTimeoutError, sr.UnknownValueError, sr.RequestError):
+        return None
+    except Exception:
+        time.sleep(3)
+        return None
+
+    for w in WAKE_WORD:
+        if w in text:
+            return text.split(w, 1)[1].strip()
+    return None
+
+
 def listen_voice():
     """catches user audio though microphone and converts it to text"""
     with sr.Microphone() as source:
@@ -107,11 +128,11 @@ def parse_intent(user_input):
     """currently hardcoded for certain tasks but can be integrated with ai 
     for future repurposing"""
 
-    if any(word IN user_input for word in ["call", "phone", "dial"])
+    if any(word in user_input for word in ["call", "phone", "dial"]):
         return "call", user_input 
-    elif any(word in user_input for word in ["open calender", "calender", "event"])
-        return "calender", user_input
-    elif "close" or "shutdown" in user_input:
+    elif any(word in user_input for word in ["open calendar", "calendar", "event"]):
+        return "calendar", user_input
+    elif "close" in user_input or "shutdown" in user_input:
         return "close", user_input
 
 # from here begins the execution part that takes the input from abovce and 
@@ -134,14 +155,13 @@ def execute_actions(action_type, raw_text):
         # extracts the contact name from the commabd spoken
         # uses simple split logic for the words in the [] bracket.
 
-        for word in ["call", "phone", "dial", "please", "make", "a", "to"]:
-           raw_text = raw_text.replace(word, "")
-        search_name= raw_text.strip().lower()
+        filler = {"call", "phone", "dial", "please", "make", "a", "to",}
+        search_name = "".join(w for w in raw_text.split() if w not in filler)
         subprocess.run(["termux-toast", f"Kaneki: searching {search_name}..."])
 
         if not search_name:
             print("kaneki: No contact name specified...")
-            subprocess.run(["termux-toast", "Kaneki: No contact name specified\n "
+            subprocess.run(["termux-toast", "Kaneki: No co  ntact name specified\n "
             "who do you want to call?..."])
             return True
 
@@ -154,6 +174,7 @@ def execute_actions(action_type, raw_text):
                 target_number = contact.get("number")
                 matched_number = contact.get("number")
                 break
+
         if target_number:
             subprocess.run(["termux-toast", f"Kaneki: calling {matched_number}..."])
             print(f"Terminal: found {matched_number}, calling {matched_number}...")
@@ -168,20 +189,15 @@ def execute_actions(action_type, raw_text):
                 except Exception:
                     pass # this works if the microphone is still in use                                                    # the microphone is free
                         
-
-
-
         else:
             print(f" hardware: {search_name} not in contacts!")
             subprocess.run(["termux-toast", f"kaneki: {search_name} not found!"])
 
 
-
-    elif action_type == "open_calender":
-        subprocess.run(["termux-toast", "Kaneki: Opening Calender..."])
-        print("[Hardware]: Opening Calender...")
-        """print(f"\n[Status...kaneki: (opening calender)...]")"""
-
+    elif action_type == "open_calendar":
+        subprocess.run(["termux-toast", "Kaneki: Opening Calendar..."])
+        print("[Hardware]: Opening Calendar...")
+        """print(f"\n[Status...kaneki: (opening calendar)...]")"""
 
 
     elif action_type == "close":
@@ -189,7 +205,6 @@ def execute_actions(action_type, raw_text):
         print("[Hardware]: Closing Application...")
         """print(f"\n[Status...kaneki: (closing application)...]")"""
         return False
-
 
 
     else:
@@ -204,9 +219,14 @@ if __name__ == "__main__":
     print ("==========================================")
     subprocess.run(["termux-toast", "Kaneki online!!"])
 
-    is_running = True
+    
     while is_running:
-        cmd = listen_voice()
+        cmd = listen_for_wake_word()
+        if cmd is None:
+            continue
+        if cmd == "":
+            subprocess.run(["termux-toast", "Kaneki: yes?.."])
+            cmd = listen_voice()
         if cmd:
             intent, text = parse_intent(cmd)
             is_running = execute_actions(intent, text)
