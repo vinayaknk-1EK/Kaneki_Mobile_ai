@@ -1,5 +1,3 @@
-Claude
-Kaneki · PY
 import subprocess
 import os
 import json
